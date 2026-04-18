@@ -5,19 +5,36 @@ import Pusher from "pusher-js";
 
 const SLIDE_DURATION = 5000;
 
+function shuffle<T>(arr: T[]): T[] {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
 export default function ScreenPage() {
-  const [photos, setPhotos] = useState<string[]>([]);
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
-  const queueRef = useRef<string[]>([]);
   const photosRef = useRef<string[]>([]);
+  const queueRef = useRef<string[]>([]);
+  const currentUrlRef = useRef<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const runningRef = useRef(false);
 
-  function showNext(allPhotos: string[]) {
-    const next =
-      queueRef.current.length > 0
-        ? queueRef.current.shift()!
-        : allPhotos[Math.floor(Math.random() * allPhotos.length)];
+  function getNext(): string {
+    if (queueRef.current.length > 0) {
+      return queueRef.current.shift()!;
+    }
+    if (queueRef.current.length === 0 && photosRef.current.length > 0) {
+      const shuffled = shuffle(photosRef.current).filter(
+        (url) => url !== currentUrlRef.current
+      );
+      queueRef.current = shuffled;
+      return queueRef.current.shift()!;
+    }
+    return currentUrlRef.current!;
+  }
+
+  function showNext() {
+    const next = getNext();
+    currentUrlRef.current = next;
 
     setVisible(false);
     setTimeout(() => {
@@ -25,7 +42,13 @@ export default function ScreenPage() {
       setVisible(true);
     }, 500);
 
-    timerRef.current = setTimeout(() => showNext(photosRef.current), SLIDE_DURATION);
+    timerRef.current = setTimeout(showNext, SLIDE_DURATION);
+  }
+
+  function start() {
+    if (runningRef.current) return;
+    runningRef.current = true;
+    showNext();
   }
 
   useEffect(() => {
@@ -33,8 +56,9 @@ export default function ScreenPage() {
       .then((res) => res.json())
       .then(({ urls }: { urls: string[] }) => {
         if (urls.length > 0) {
-          setPhotos(urls);
           photosRef.current = urls;
+          queueRef.current = shuffle(urls);
+          start();
         }
       });
   }, []);
@@ -46,12 +70,9 @@ export default function ScreenPage() {
 
     const channel = pusher.subscribe("wedding");
     channel.bind("new-photo", (data: { url: string }) => {
-      setPhotos((prev) => {
-        const next = [...prev, data.url];
-        photosRef.current = next;
-        return next;
-      });
-      queueRef.current.push(data.url);
+      photosRef.current = [...photosRef.current, data.url];
+      queueRef.current.unshift(data.url);
+      if (!runningRef.current) start();
     });
 
     return () => {
@@ -60,13 +81,6 @@ export default function ScreenPage() {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, []);
-
-  useEffect(() => {
-    photosRef.current = photos;
-    if (photos.length > 0 && !currentUrl) {
-      showNext(photos);
-    }
-  }, [photos]);
 
   if (!currentUrl) {
     return (
