@@ -3,7 +3,9 @@
 import { useState } from "react";
 
 export default function UploadPage() {
-  const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">(
+    "idle",
+  );
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -29,12 +31,21 @@ export default function UploadPage() {
 
       <label className="cursor-pointer bg-pink-500 text-white text-lg font-semibold px-8 py-4 rounded-full">
         写真を選ぶ
-        <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
       </label>
 
-      {status === "uploading" && <p className="text-gray-500">アップロード中...</p>}
+      {status === "uploading" && (
+        <p className="text-gray-500">アップロード中...</p>
+      )}
       {status === "done" && <p className="text-green-600">送信しました！</p>}
-      {status === "error" && <p className="text-red-500">エラーが発生しました</p>}
+      {status === "error" && (
+        <p className="text-red-500">エラーが発生しました</p>
+      )}
     </main>
   );
 }
