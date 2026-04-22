@@ -22,24 +22,27 @@ export default function ScreenPage() {
     if (queueRef.current.length > 0) {
       return queueRef.current.shift()!;
     }
-    if (queueRef.current.length === 0 && photosRef.current.length > 0) {
-      const shuffled = shuffle(photosRef.current).filter(
-        (url) => url !== currentUrlRef.current
-      );
-      queueRef.current = shuffled;
-      return queueRef.current.shift()!;
-    }
-    return currentUrlRef.current!;
+    const shuffled = shuffle(photosRef.current).filter(
+      (url) => url !== currentUrlRef.current,
+    );
+    queueRef.current = shuffled;
+    return queueRef.current.shift() ?? currentUrlRef.current!;
   }
 
   function showNext() {
     const next = getNext();
-    currentUrlRef.current = next;
 
+    // 次が現在と同じ URL（写真が1枚のみ等）の場合はフェードせず再スケジュールのみ
+    if (next === currentUrlRef.current) {
+      timerRef.current = setTimeout(showNext, SLIDE_DURATION);
+      return;
+    }
+
+    currentUrlRef.current = next;
     setVisible(false);
     setTimeout(() => {
       setCurrentUrl(next);
-      setVisible(true);
+      // setVisible(true) は onLoad で呼ぶ（読み込み完了後にフェードイン）
     }, 500);
 
     timerRef.current = setTimeout(showNext, SLIDE_DURATION);
@@ -93,10 +96,16 @@ export default function ScreenPage() {
   return (
     <main className="flex items-center justify-center min-h-screen bg-black overflow-hidden">
       <img
+        key={currentUrl}
         src={currentUrl}
         alt="wedding photo"
         className="max-h-screen max-w-full object-contain transition-opacity duration-500"
         style={{ opacity: visible ? 1 : 0 }}
+        onLoad={() => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => setVisible(true));
+          });
+        }}
       />
     </main>
   );
