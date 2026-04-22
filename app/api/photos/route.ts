@@ -8,13 +8,17 @@ cloudinary.config({
 });
 
 export async function GET() {
-  const result = await cloudinary.search
-    .expression("folder:wedding")
-    .sort_by("created_at", "desc")
-    .max_results(100)
-    .execute();
+  try {
+    const result = await cloudinary.search
+      .expression("folder:wedding")
+      .sort_by("created_at", "desc")
+      .max_results(100)
+      .execute();
 
-  const urls = result.resources.map((r: { secure_url: string }) => r.secure_url);
-
-  return NextResponse.json({ urls });
+    const urls = result.resources.map((r: { secure_url: string }) => r.secure_url);
+    return NextResponse.json({ urls });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
