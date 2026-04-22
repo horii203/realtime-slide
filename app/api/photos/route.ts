@@ -15,7 +15,9 @@ export async function GET() {
       .max_results(100)
       .execute();
 
-    const urls = result.resources.map((r: { secure_url: string }) => r.secure_url);
+    const urls = result.resources.map((r: { secure_url: string }) =>
+      r.secure_url.replace("/upload/", "/upload/q_auto:good,f_auto,w_1920/"),
+    );
     return NextResponse.json({ urls });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);

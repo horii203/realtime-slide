@@ -32,9 +32,11 @@ export async function POST(req: NextRequest) {
     folder: "wedding",
   });
 
+  const optimizedUrl = result.secure_url.replace("/upload/", "/upload/q_auto:good,f_auto,w_1920/");
+
   await pusher.trigger("wedding", "new-photo", {
-    url: result.secure_url,
+    url: optimizedUrl,
   });
 
-  return NextResponse.json({ url: result.secure_url });
+  return NextResponse.json({ url: optimizedUrl });
 }
