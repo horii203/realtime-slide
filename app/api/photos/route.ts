@@ -8,6 +8,15 @@ cloudinary.config({
 });
 
 export async function GET() {
+  // 一時デバッグ
+  if (!process.env.CLOUDINARY_CLOUD_NAME) {
+    return NextResponse.json({
+      error: "env missing",
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME ?? "undefined",
+      api_key: process.env.CLOUDINARY_API_KEY ? "set" : "undefined",
+    }, { status: 500 });
+  }
+
   try {
     const result = await cloudinary.search
       .expression("folder:wedding")
