@@ -5,9 +5,8 @@ import { useState } from "react";
 const EMOJIS = ["❤️", "🎉", "👏", "😊", "👍"];
 
 export default function UploadPage() {
-  const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">(
-    "idle",
-  );
+  const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">("idle");
+  const [pending, setPending] = useState<{ file: File; previewUrl: string } | null>(null);
 
   async function sendReaction(emoji: string) {
     await fetch("/api/reaction", {
@@ -17,22 +16,31 @@ export default function UploadPage() {
     });
   }
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
+    const previewUrl = URL.createObjectURL(file);
+    setPending({ file, previewUrl });
+  }
 
+  async function confirmUpload() {
+    if (!pending) return;
     setStatus("uploading");
+    setPending(null);
+    URL.revokeObjectURL(pending.previewUrl);
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", pending.file);
 
     const res = await fetch("/api/upload", { method: "POST", body: formData });
+    setStatus(res.ok ? "done" : "error");
+  }
 
-    if (res.ok) {
-      setStatus("done");
-    } else {
-      setStatus("error");
-    }
+  function cancelUpload() {
+    if (!pending) return;
+    URL.revokeObjectURL(pending.previewUrl);
+    setPending(null);
   }
 
   return (
@@ -112,6 +120,34 @@ export default function UploadPage() {
           <div className="w-12 h-px bg-primary/30" />
         </div>
       </div>
+
+      {/* 確認モーダル */}
+      {pending && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6">
+          <div className="bg-background w-full max-w-sm flex flex-col items-center gap-6 p-6">
+            <p className="tracking-widest text-sm text-foreground">この写真をアップロードしますか？</p>
+            <img
+              src={pending.previewUrl}
+              alt="preview"
+              className="w-full max-h-64 object-contain"
+            />
+            <div className="flex gap-4 w-full">
+              <button
+                onClick={cancelUpload}
+                className="flex-1 py-3 border border-primary/40 text-muted-foreground text-sm tracking-widest hover:bg-primary/5 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={confirmUpload}
+                className="flex-1 py-3 bg-primary/90 hover:bg-primary text-primary-foreground text-sm tracking-widest transition-colors"
+              >
+                送信する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
