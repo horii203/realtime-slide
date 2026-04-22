@@ -9,9 +9,12 @@ function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
+type Reaction = { id: string; emoji: string; x: number };
+
 export default function ScreenPage() {
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
+  const [reactions, setReactions] = useState<Reaction[]>([]);
   const photosRef = useRef<string[]>([]);
   const queueRef = useRef<string[]>([]);
   const currentUrlRef = useRef<string | null>(null);
@@ -78,6 +81,15 @@ export default function ScreenPage() {
       if (!runningRef.current) start();
     });
 
+    channel.bind("reaction", (data: { emoji: string }) => {
+      const id = Math.random().toString(36).slice(2);
+      const x = 10 + Math.random() * 80;
+      setReactions((prev) => [...prev, { id, emoji: data.emoji, x }]);
+      setTimeout(() => {
+        setReactions((prev) => prev.filter((r) => r.id !== id));
+      }, 3000);
+    });
+
     return () => {
       channel.unbind_all();
       pusher.disconnect();
@@ -95,6 +107,13 @@ export default function ScreenPage() {
 
   return (
     <main className="fixed inset-0 bg-black">
+      <style>{`
+        @keyframes float-up {
+          0%   { transform: translateY(0);      opacity: 1; }
+          60%  { opacity: 1; }
+          100% { transform: translateY(-50vh); opacity: 0; }
+        }
+      `}</style>
       <img
         key={currentUrl}
         src={currentUrl}
@@ -107,6 +126,18 @@ export default function ScreenPage() {
           });
         }}
       />
+      {reactions.map((r) => (
+        <div
+          key={r.id}
+          className="fixed bottom-8 text-5xl pointer-events-none select-none"
+          style={{
+            left: `${r.x}%`,
+            animation: "float-up 3s linear forwards",
+          }}
+        >
+          {r.emoji}
+        </div>
+      ))}
     </main>
   );
 }

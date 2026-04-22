@@ -2,10 +2,20 @@
 
 import { useState } from "react";
 
+const EMOJIS = ["❤️", "🎉", "👏", "😊", "👍"];
+
 export default function UploadPage() {
   const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">(
     "idle",
   );
+
+  async function sendReaction(emoji: string) {
+    await fetch("/api/reaction", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ emoji }),
+    });
+  }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -32,7 +42,7 @@ export default function UploadPage() {
       <div className="absolute inset-6 border border-primary/10 pointer-events-none" />
 
       {/* コンテンツ */}
-      <div className="relative z-10 flex flex-col items-center gap-8 px-6 text-center">
+      <div className="relative z-10 flex flex-col items-center gap-6 px-6 text-center">
         {/* タイトル */}
         <div className="flex flex-col items-center gap-6">
           <h1 className="text-3xl tracking-widest text-foreground">
@@ -76,6 +86,24 @@ export default function UploadPage() {
           {status === "error" && (
             <p className="text-red-500">エラーが発生しました</p>
           )}
+        </div>
+
+        {/* リアクション */}
+        <div className="flex flex-col items-center gap-3 mt-2">
+          <p className="text-muted-foreground text-xs tracking-widest">
+            リアクションを送る
+          </p>
+          <div className="flex gap-5">
+            {EMOJIS.map((emoji) => (
+              <button
+                key={emoji}
+                onClick={() => sendReaction(emoji)}
+                className="text-3xl hover:scale-125 active:scale-95 transition-transform duration-150"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* デコレーションライン */}
