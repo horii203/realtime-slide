@@ -94,12 +94,12 @@ export default function ScreenPage() {
   }
 
   return (
-    <main className="flex items-center justify-center min-h-screen bg-black overflow-hidden">
+    <main className="fixed inset-0 bg-black">
       <img
         key={currentUrl}
         src={currentUrl}
         alt="wedding photo"
-        className="max-h-screen max-w-full object-contain transition-opacity duration-500"
+        className="w-full h-full object-contain transition-opacity duration-500"
         style={{ opacity: visible ? 1 : 0 }}
         onLoad={() => {
           requestAnimationFrame(() => {

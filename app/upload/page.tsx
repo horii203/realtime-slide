@@ -26,26 +26,65 @@ export default function UploadPage() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen gap-6 p-8">
-      <h1 className="text-2xl font-bold">写真をシェアしよう</h1>
+    <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
+      {/* 装飾フレーム */}
+      <div className="absolute inset-4 border border-primary/20 pointer-events-none" />
+      <div className="absolute inset-6 border border-primary/10 pointer-events-none" />
 
-      <label className="cursor-pointer bg-pink-500 text-white text-lg font-semibold px-8 py-4 rounded-full">
-        写真を選ぶ
-        <input
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-      </label>
+      {/* コンテンツ */}
+      <div className="relative z-10 flex flex-col items-center gap-8 px-6 text-center">
+        {/* タイトル */}
+        <div className="flex flex-col items-center gap-6">
+          <h1 className="text-3xl tracking-widest text-foreground">
+            写真をシェアしよう
+          </h1>
+          <p className="text-muted-foreground leading-relaxed text-sm max-w-sm">
+            写真をアップロードすると、
+            <br />
+            リアルタイムでスクリーンに表示されます。
+          </p>
+        </div>
 
-      {status === "uploading" && (
-        <p className="text-gray-500">アップロード中...</p>
-      )}
-      {status === "done" && <p className="text-green-600">送信しました！</p>}
-      {status === "error" && (
-        <p className="text-red-500">エラーが発生しました</p>
-      )}
+        {/* シマーボタン */}
+        <label className="group relative cursor-pointer mt-4">
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="sr-only"
+            onChange={handleFileChange}
+          />
+          <div className="relative overflow-hidden px-10 py-4 bg-primary/90 hover:bg-primary transition-colors duration-300 rounded-sm">
+            {/* シマーエフェクト */}
+            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+            <span className="relative text-primary-foreground tracking-widest text-sm">
+              写真を選ぶ
+            </span>
+          </div>
+        </label>
+
+        {/* ステータス */}
+        <div className="min-h-5 text-sm">
+          {status === "uploading" && (
+            <p className="text-muted-foreground animate-pulse tracking-wider">
+              アップロード中...
+            </p>
+          )}
+          {status === "done" && (
+            <p className="text-foreground tracking-wider">✨ 送信しました</p>
+          )}
+          {status === "error" && (
+            <p className="text-red-500">エラーが発生しました</p>
+          )}
+        </div>
+
+        {/* デコレーションライン */}
+        <div className="flex items-center gap-4 mt-6">
+          <div className="w-12 h-px bg-primary/30" />
+          <div className="w-1.5 h-1.5 rotate-45 bg-primary/50" />
+          <div className="w-12 h-px bg-primary/30" />
+        </div>
+      </div>
     </main>
   );
 }
