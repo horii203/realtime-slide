@@ -14,7 +14,7 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-muted-foreground: var(--muted-foreground);
-  --font-sans: var(--font-noto-sans-jp);
+  --font-sans: var(--font-zen-old-mincho);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -27,5 +27,6 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-noto-sans-jp), sans-serif;
+  font-family: var(--font-zen-old-mincho), serif;
+  font-weight: 500;
 }

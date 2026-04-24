@@ -112,7 +112,7 @@ export default function UploadPage() {
 
         {/* リアクション */}
         <div className="flex flex-col items-center gap-3 mt-2">
-          <p className="text-muted-foreground text-xs tracking-widest">
+          <p className="text-muted-foreground text-sm tracking-widest">
             リアクションを送る
           </p>
           <div className="flex gap-5">
@@ -151,7 +151,7 @@ export default function UploadPage() {
             <h2 className="tracking-widest text-foreground text-m">使い方</h2>
             <ul className="flex flex-col gap-4 w-full">
               {HELP_STEPS.map((step, i) => (
-                <li key={i} className="flex items-start gap-4">
+                <li key={i} className="flex items-start gap-3">
                   <span
                     className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium"
                     style={{ backgroundColor: "#8c7b5a", color: "#f5ecd7" }}
