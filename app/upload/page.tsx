@@ -4,9 +4,24 @@ import { useState } from "react";
 
 const EMOJIS = ["❤️", "🎉", "👏", "😊", "👍"];
 
+const HELP_STEPS = [
+  { step: 1, text: "「写真を選ぶ」ボタンでスマホから写真を選んでください" },
+  {
+    step: 2,
+    text: "確認後「送信する」を押すと、会場内のスクリーンに表示されます",
+  },
+  { step: 3, text: "絵文字ボタンでリアクションをスクリーンに流せます" },
+];
+
 export default function UploadPage() {
-  const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">("idle");
-  const [pending, setPending] = useState<{ file: File; previewUrl: string } | null>(null);
+  const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">(
+    "idle",
+  );
+  const [pending, setPending] = useState<{
+    file: File;
+    previewUrl: string;
+  } | null>(null);
+  const [showHelp, setShowHelp] = useState(true);
 
   async function sendReaction(emoji: string) {
     await fetch("/api/reaction", {
@@ -59,7 +74,7 @@ export default function UploadPage() {
           <p className="text-muted-foreground leading-relaxed text-sm max-w-sm">
             写真をアップロードすると、
             <br />
-            リアルタイムでスクリーンに表示されます。
+            スクリーンに表示されます。
           </p>
         </div>
 
@@ -119,13 +134,53 @@ export default function UploadPage() {
           <div className="w-1.5 h-1.5 rotate-45 bg-primary/50" />
           <div className="w-12 h-px bg-primary/30" />
         </div>
+
+        {/* 使い方ボタン */}
+        <button
+          onClick={() => setShowHelp(true)}
+          className="px-5 py-2 border border-primary/30 text-muted-foreground text-xs tracking-widest hover:border-primary/60 hover:text-foreground transition-colors mt-2"
+        >
+          使い方
+        </button>
       </div>
+
+      {/* 使い方モーダル */}
+      {showHelp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6">
+          <div className="bg-background w-full max-w-sm flex flex-col items-center gap-6 p-8">
+            <h2 className="tracking-widest text-foreground text-m">使い方</h2>
+            <ul className="flex flex-col gap-4 w-full">
+              {HELP_STEPS.map((step, i) => (
+                <li key={i} className="flex items-start gap-4">
+                  <span
+                    className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium"
+                    style={{ backgroundColor: "#8c7b5a", color: "#f5ecd7" }}
+                  >
+                    {step.step}
+                  </span>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    {step.text}
+                  </p>
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => setShowHelp(false)}
+              className="w-full py-3 bg-primary/90 hover:bg-primary text-primary-foreground text-sm tracking-widest transition-colors"
+            >
+              はじめる
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 確認モーダル */}
       {pending && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6">
           <div className="bg-background w-full max-w-sm flex flex-col items-center gap-6 p-6">
-            <p className="tracking-widest text-sm text-foreground">この写真をアップロードしますか？</p>
+            <p className="tracking-widest text-sm text-foreground">
+              この写真をアップロードしますか？
+            </p>
             <img
               src={pending.previewUrl}
               alt="preview"
