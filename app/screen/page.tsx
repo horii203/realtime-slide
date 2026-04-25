@@ -118,6 +118,8 @@ export default function ScreenPage() {
           60%  { opacity: 1; }
           100% { transform: translateY(-50vh); opacity: 0; }
         }
+        .reaction-emoji { font-size: 4vw; }
+        @media (max-width: 768px) { .reaction-emoji { font-size: 8vw; } }
       `}</style>
       <img
         key={currentUrl}
@@ -134,10 +136,9 @@ export default function ScreenPage() {
       {reactions.map((r) => (
         <div
           key={r.id}
-          className="fixed bottom-8 pointer-events-none select-none"
+          className="reaction-emoji fixed bottom-8 pointer-events-none select-none"
           style={{
             left: `${r.x}%`,
-            fontSize: "4vw",
             animation: "float-up 3s linear forwards",
           }}
         >
