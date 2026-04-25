@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Pusher from "pusher-js";
 
 const EMOJIS = ["❤️", "🎉", "👏", "😊", "👍"];
 
@@ -10,8 +11,26 @@ const HELP_STEPS = [
     step: 2,
     text: "確認後「送信する」を押すと、会場内のスクリーンに表示されます",
   },
-  { step: 3, text: "絵文字ボタンでリアクションをスクリーンに流せます" },
+  { step: 3, text: "「リアクションを送る」から絵文字をスクリーンに流せます" },
 ];
+
+function useModal(initialOpen = false) {
+  const [show, setShow] = useState(initialOpen);
+  const [closing, setClosing] = useState(false);
+
+  function open() {
+    setShow(true);
+  }
+  function close() {
+    setClosing(true);
+    setTimeout(() => {
+      setShow(false);
+      setClosing(false);
+    }, 200);
+  }
+
+  return { show, closing, open, close };
+}
 
 export default function UploadPage() {
   const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">(
@@ -21,16 +40,40 @@ export default function UploadPage() {
     file: File;
     previewUrl: string;
   } | null>(null);
-  const [showHelp, setShowHelp] = useState(true);
-  const [closingHelp, setClosingHelp] = useState(false);
+  const [displayedPhoto, setDisplayedPhoto] = useState<string | null>(null);
+  const [photoVisible, setPhotoVisible] = useState(false);
 
-  function closeHelp() {
-    setClosingHelp(true);
+  const help = useModal(true);
+  const reaction = useModal();
+
+  function updatePhoto(url: string) {
+    setPhotoVisible(false);
     setTimeout(() => {
-      setShowHelp(false);
-      setClosingHelp(false);
-    }, 200);
+      setDisplayedPhoto(url);
+      setPhotoVisible(true);
+    }, 300);
   }
+
+  useEffect(() => {
+    fetch("/api/photos")
+      .then((res) => res.json())
+      .then(({ urls }: { urls: string[] }) => {
+        if (urls.length > 0) updatePhoto(urls[0]);
+      });
+
+    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    });
+    const channel = pusher.subscribe("wedding");
+    channel.bind("now-showing", (data: { url: string }) => {
+      updatePhoto(data.url);
+    });
+
+    return () => {
+      channel.unbind_all();
+      pusher.disconnect();
+    };
+  }, []);
 
   async function sendReaction(emoji: string) {
     await fetch("/api/reaction", {
@@ -44,18 +87,18 @@ export default function UploadPage() {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    const previewUrl = URL.createObjectURL(file);
-    setPending({ file, previewUrl });
+    setPending({ file, previewUrl: URL.createObjectURL(file) });
   }
 
   async function confirmUpload() {
     if (!pending) return;
     setStatus("uploading");
-    setPending(null);
+    const file = pending.file;
     URL.revokeObjectURL(pending.previewUrl);
+    setPending(null);
 
     const formData = new FormData();
-    formData.append("file", pending.file);
+    formData.append("file", file);
 
     const res = await fetch("/api/upload", { method: "POST", body: formData });
     setStatus(res.ok ? "done" : "error");
@@ -67,6 +110,9 @@ export default function UploadPage() {
     setPending(null);
   }
 
+  const overlayClass = (closing: boolean) =>
+    `${closing ? "animate-fade-out" : "animate-fade-in"} fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6`;
+
   return (
     <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
       {/* 装飾フレーム */}
@@ -75,7 +121,6 @@ export default function UploadPage() {
 
       {/* コンテンツ */}
       <div className="relative z-10 flex flex-col items-center gap-6 px-6 text-center">
-        {/* タイトル */}
         <div className="flex flex-col items-center gap-6">
           <h1 className="text-3xl tracking-widest text-foreground">
             写真をシェアしよう
@@ -87,16 +132,15 @@ export default function UploadPage() {
           </p>
         </div>
 
-        {/* シマーボタン */}
-        <label className="group relative cursor-pointer mt-4">
+        {/* 写真を選ぶ */}
+        <label className="group relative cursor-pointer mt-4 w-56 block">
           <input
             type="file"
             accept="image/*"
             className="sr-only"
             onChange={handleFileChange}
           />
-          <div className="relative overflow-hidden px-10 py-4 bg-primary/90 hover:bg-primary transition-colors duration-300 rounded-sm">
-            {/* シマーエフェクト */}
+          <div className="relative overflow-hidden w-full py-4 text-center bg-primary/90 hover:bg-primary transition-colors duration-300 rounded-sm">
             <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
             <span className="relative text-primary-foreground tracking-widest text-base">
               写真を選ぶ
@@ -105,40 +149,33 @@ export default function UploadPage() {
         </label>
 
         {/* ステータス */}
-        <div className="min-h-5 text-base">
+        <div className="text-base">
           {status === "uploading" && (
             <p className="text-muted-foreground animate-pulse tracking-wider">
               アップロード中...
             </p>
           )}
           {status === "done" && (
-            <p className="text-foreground tracking-wider">✨ 送信しました</p>
+            <p className="text-foreground tracking-wider">送信しました</p>
           )}
           {status === "error" && (
             <p className="text-red-500">エラーが発生しました</p>
           )}
         </div>
 
-        {/* リアクション */}
-        <div className="flex flex-col items-center gap-3 mt-2">
-          <p className="text-muted-foreground text-base tracking-widest">
+        {/* リアクションボタン */}
+        <button
+          onClick={reaction.open}
+          className="group relative overflow-hidden w-56 py-4 bg-primary/90 hover:bg-primary transition-colors duration-300 rounded-sm"
+        >
+          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+          <span className="relative text-primary-foreground tracking-widest text-base">
             リアクションを送る
-          </p>
-          <div className="flex gap-5">
-            {EMOJIS.map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => sendReaction(emoji)}
-                className="text-3xl hover:scale-125 active:scale-95 transition-transform duration-150"
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        </div>
+          </span>
+        </button>
 
         {/* デコレーションライン */}
-        <div className="flex items-center gap-4 mt-6">
+        <div className="flex items-center gap-4 mt-4">
           <div className="w-12 h-px bg-primary/30" />
           <div className="w-1.5 h-1.5 rotate-45 bg-primary/50" />
           <div className="w-12 h-px bg-primary/30" />
@@ -146,18 +183,61 @@ export default function UploadPage() {
 
         {/* 使い方ボタン */}
         <button
-          onClick={() => setShowHelp(true)}
+          onClick={help.open}
           className="px-5 py-2 border border-primary/30 text-muted-foreground text-base tracking-widest hover:border-primary/60 hover:text-foreground transition-colors mt-2"
         >
           使い方
         </button>
       </div>
 
+      {/* リアクションモーダル */}
+      {reaction.show && (
+        <div className={overlayClass(reaction.closing)}>
+          <div className="relative bg-background w-full max-w-sm flex flex-col items-center gap-6 py-10 px-4">
+            <button
+              onClick={reaction.close}
+              className="absolute top-3 right-3 text-muted-foreground/60 hover:text-foreground transition-colors text-xl leading-none"
+            >
+              ×
+            </button>
+            <div className="w-full flex flex-col items-center gap-2">
+              <p className="text-muted-foreground text-xs tracking-widest">
+                会場スクリーンの表示
+              </p>
+              <div className="w-full h-60">
+                {displayedPhoto && (
+                  <img
+                    src={displayedPhoto}
+                    alt="現在のスクリーン"
+                    className="w-full h-full object-contain transition-opacity duration-300"
+                    style={{ opacity: photoVisible ? 1 : 0 }}
+                  />
+                )}
+              </div>
+            </div>
+            <p className="text-muted-foreground text-sm tracking-widest text-center">
+              タップした絵文字が
+              <br />
+              スクリーン上に流れます
+            </p>
+            <div className="flex gap-6">
+              {EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => sendReaction(emoji)}
+                  className="text-3xl hover:scale-125 active:scale-95 transition-transform duration-150"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 使い方モーダル */}
-      {showHelp && (
-        <div
-          className={`${closingHelp ? "animate-fade-out" : "animate-fade-in"} fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6`}
-        >
+      {help.show && (
+        <div className={overlayClass(help.closing)}>
           <div className="bg-background w-full max-w-sm flex flex-col items-center gap-6 p-8">
             <h2 className="tracking-widest text-foreground text-base">
               使い方
@@ -178,7 +258,7 @@ export default function UploadPage() {
               ))}
             </ul>
             <button
-              onClick={closeHelp}
+              onClick={help.close}
               className="w-full py-3 bg-primary/90 hover:bg-primary text-primary-foreground text-base tracking-widest transition-colors"
             >
               はじめる

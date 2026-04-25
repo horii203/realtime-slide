@@ -43,6 +43,11 @@ export default function ScreenPage() {
 
     currentUrlRef.current = next;
     setVisible(false);
+    fetch("/api/now-showing", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: next }),
+    });
     setTimeout(() => {
       setCurrentUrl(next);
       // setVisible(true) は onLoad で呼ぶ（読み込み完了後にフェードイン）
