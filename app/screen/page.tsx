@@ -129,9 +129,10 @@ export default function ScreenPage() {
       {reactions.map((r) => (
         <div
           key={r.id}
-          className="fixed bottom-8 text-5xl pointer-events-none select-none"
+          className="fixed bottom-8 pointer-events-none select-none"
           style={{
             left: `${r.x}%`,
+            fontSize: "4vw",
             animation: "float-up 3s linear forwards",
           }}
         >

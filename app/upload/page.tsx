@@ -22,6 +22,15 @@ export default function UploadPage() {
     previewUrl: string;
   } | null>(null);
   const [showHelp, setShowHelp] = useState(true);
+  const [closingHelp, setClosingHelp] = useState(false);
+
+  function closeHelp() {
+    setClosingHelp(true);
+    setTimeout(() => {
+      setShowHelp(false);
+      setClosingHelp(false);
+    }, 200);
+  }
 
   async function sendReaction(emoji: string) {
     await fetch("/api/reaction", {
@@ -71,7 +80,7 @@ export default function UploadPage() {
           <h1 className="text-3xl tracking-widest text-foreground">
             写真をシェアしよう
           </h1>
-          <p className="text-muted-foreground leading-relaxed text-sm max-w-sm">
+          <p className="text-muted-foreground leading-relaxed text-base max-w-sm">
             写真をアップロードすると、
             <br />
             スクリーンに表示されます。
@@ -89,14 +98,14 @@ export default function UploadPage() {
           <div className="relative overflow-hidden px-10 py-4 bg-primary/90 hover:bg-primary transition-colors duration-300 rounded-sm">
             {/* シマーエフェクト */}
             <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-            <span className="relative text-primary-foreground tracking-widest text-sm">
+            <span className="relative text-primary-foreground tracking-widest text-base">
               写真を選ぶ
             </span>
           </div>
         </label>
 
         {/* ステータス */}
-        <div className="min-h-5 text-sm">
+        <div className="min-h-5 text-base">
           {status === "uploading" && (
             <p className="text-muted-foreground animate-pulse tracking-wider">
               アップロード中...
@@ -112,7 +121,7 @@ export default function UploadPage() {
 
         {/* リアクション */}
         <div className="flex flex-col items-center gap-3 mt-2">
-          <p className="text-muted-foreground text-sm tracking-widest">
+          <p className="text-muted-foreground text-base tracking-widest">
             リアクションを送る
           </p>
           <div className="flex gap-5">
@@ -138,7 +147,7 @@ export default function UploadPage() {
         {/* 使い方ボタン */}
         <button
           onClick={() => setShowHelp(true)}
-          className="px-5 py-2 border border-primary/30 text-muted-foreground text-xs tracking-widest hover:border-primary/60 hover:text-foreground transition-colors mt-2"
+          className="px-5 py-2 border border-primary/30 text-muted-foreground text-base tracking-widest hover:border-primary/60 hover:text-foreground transition-colors mt-2"
         >
           使い方
         </button>
@@ -146,27 +155,31 @@ export default function UploadPage() {
 
       {/* 使い方モーダル */}
       {showHelp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6">
+        <div
+          className={`${closingHelp ? "animate-fade-out" : "animate-fade-in"} fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6`}
+        >
           <div className="bg-background w-full max-w-sm flex flex-col items-center gap-6 p-8">
-            <h2 className="tracking-widest text-foreground text-m">使い方</h2>
+            <h2 className="tracking-widest text-foreground text-base">
+              使い方
+            </h2>
             <ul className="flex flex-col gap-4 w-full">
               {HELP_STEPS.map((step, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <span
-                    className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium"
+                    className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium mt-0.5"
                     style={{ backgroundColor: "#8c7b5a", color: "#f5ecd7" }}
                   >
                     {step.step}
                   </span>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
+                  <p className="text-muted-foreground text-base leading-relaxed">
                     {step.text}
                   </p>
                 </li>
               ))}
             </ul>
             <button
-              onClick={() => setShowHelp(false)}
-              className="w-full py-3 bg-primary/90 hover:bg-primary text-primary-foreground text-sm tracking-widest transition-colors"
+              onClick={closeHelp}
+              className="w-full py-3 bg-primary/90 hover:bg-primary text-primary-foreground text-base tracking-widest transition-colors"
             >
               はじめる
             </button>
@@ -178,7 +191,7 @@ export default function UploadPage() {
       {pending && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6">
           <div className="bg-background w-full max-w-sm flex flex-col items-center gap-6 p-6">
-            <p className="tracking-widest text-sm text-foreground">
+            <p className="tracking-widest text-base text-foreground">
               この写真をアップロードしますか？
             </p>
             <img
@@ -189,13 +202,13 @@ export default function UploadPage() {
             <div className="flex gap-4 w-full">
               <button
                 onClick={cancelUpload}
-                className="flex-1 py-3 border border-primary/40 text-muted-foreground text-sm tracking-widest hover:bg-primary/5 transition-colors"
+                className="flex-1 py-3 border border-primary/40 text-muted-foreground text-base tracking-widest hover:bg-primary/5 transition-colors"
               >
                 キャンセル
               </button>
               <button
                 onClick={confirmUpload}
-                className="flex-1 py-3 bg-primary/90 hover:bg-primary text-primary-foreground text-sm tracking-widest transition-colors"
+                className="flex-1 py-3 bg-primary/90 hover:bg-primary text-primary-foreground text-base tracking-widest transition-colors"
               >
                 送信する
               </button>
