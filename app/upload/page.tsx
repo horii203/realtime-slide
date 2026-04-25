@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Pusher from "pusher-js";
 
 const EMOJIS = ["❤️", "🎉", "👏", "😊", "👍"];
@@ -46,6 +46,10 @@ export default function UploadPage() {
   const help = useModal(true);
   const reaction = useModal();
 
+  const photosRef = useRef<string[]>([]);
+  const photoIndexRef = useRef(0);
+  const slideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   function updatePhoto(url: string) {
     setPhotoVisible(false);
     setTimeout(() => {
@@ -55,23 +59,49 @@ export default function UploadPage() {
   }
 
   useEffect(() => {
+    function scheduleSlide() {
+      if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
+      slideTimerRef.current = setTimeout(() => {
+        const photos = photosRef.current;
+        if (photos.length <= 1) { scheduleSlide(); return; }
+        photoIndexRef.current = (photoIndexRef.current + 1) % photos.length;
+        updatePhoto(photos[photoIndexRef.current]);
+        scheduleSlide();
+      }, 5000);
+    }
+
     fetch("/api/photos")
       .then((res) => res.json())
       .then(({ urls }: { urls: string[] }) => {
-        if (urls.length > 0) updatePhoto(urls[0]);
+        if (urls.length === 0) return;
+        photosRef.current = urls;
+        photoIndexRef.current = 0;
+        updatePhoto(urls[0]);
+        scheduleSlide();
       });
 
     const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
       cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
     });
     const channel = pusher.subscribe("wedding");
+
     channel.bind("now-showing", (data: { url: string }) => {
+      const idx = photosRef.current.indexOf(data.url);
+      if (idx !== -1) photoIndexRef.current = idx;
       updatePhoto(data.url);
+      scheduleSlide();
+    });
+
+    channel.bind("new-photo", (data: { url: string }) => {
+      if (!photosRef.current.includes(data.url)) {
+        photosRef.current = [...photosRef.current, data.url];
+      }
     });
 
     return () => {
       channel.unbind_all();
       pusher.disconnect();
+      if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
     };
   }, []);
 
