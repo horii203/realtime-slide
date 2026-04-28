@@ -155,7 +155,7 @@ export default function UploadPage() {
       <div className="absolute inset-6 border border-primary/10 pointer-events-none" />
 
       {/* コンテンツ */}
-      <div className="relative z-10 flex flex-col items-center gap-6 px-6 text-center">
+      <div className="relative z-10 flex flex-col items-center gap-8 px-6 text-center">
         <div className="flex flex-col items-center gap-6">
           <h1 className="text-3xl tracking-widest text-foreground">
             写真をシェアしよう
@@ -183,8 +183,6 @@ export default function UploadPage() {
             </span>
           </div>
         </label>
-
-        <div className="h-5" />
 
         {/* リアクションボタン */}
         <button
