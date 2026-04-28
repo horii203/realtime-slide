@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Pusher from "pusher-js";
+import { Camera, Heart } from "lucide-react";
 
 const EMOJIS = ["❤️", "🎉", "👏", "😊", "👍"];
 
@@ -33,13 +34,13 @@ function useModal(initialOpen = false) {
 }
 
 export default function UploadPage() {
-  const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">(
-    "idle",
-  );
-  const [pending, setPending] = useState<{
-    file: File;
-    previewUrl: string;
-  } | null>(null);
+  type UploadModal =
+    | { phase: "confirm"; file: File; previewUrl: string }
+    | { phase: "uploading"; previewUrl: string }
+    | { phase: "done"; previewUrl: string }
+    | { phase: "error"; previewUrl: string }
+    | null;
+  const [uploadModal, setUploadModal] = useState<UploadModal>(null);
   const [displayedPhoto, setDisplayedPhoto] = useState<string | null>(null);
   const [photoVisible, setPhotoVisible] = useState(false);
 
@@ -63,7 +64,10 @@ export default function UploadPage() {
       if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
       slideTimerRef.current = setTimeout(() => {
         const photos = photosRef.current;
-        if (photos.length <= 1) { scheduleSlide(); return; }
+        if (photos.length <= 1) {
+          scheduleSlide();
+          return;
+        }
         photoIndexRef.current = (photoIndexRef.current + 1) % photos.length;
         updatePhoto(photos[photoIndexRef.current]);
         scheduleSlide();
@@ -117,27 +121,28 @@ export default function UploadPage() {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    setPending({ file, previewUrl: URL.createObjectURL(file) });
+    setUploadModal({
+      phase: "confirm",
+      file,
+      previewUrl: URL.createObjectURL(file),
+    });
   }
 
   async function confirmUpload() {
-    if (!pending) return;
-    setStatus("uploading");
-    const file = pending.file;
-    URL.revokeObjectURL(pending.previewUrl);
-    setPending(null);
+    if (uploadModal?.phase !== "confirm") return;
+    const { file, previewUrl } = uploadModal;
+    setUploadModal({ phase: "uploading", previewUrl });
 
     const formData = new FormData();
     formData.append("file", file);
 
     const res = await fetch("/api/upload", { method: "POST", body: formData });
-    setStatus(res.ok ? "done" : "error");
+    setUploadModal({ phase: res.ok ? "done" : "error", previewUrl });
   }
 
-  function cancelUpload() {
-    if (!pending) return;
-    URL.revokeObjectURL(pending.previewUrl);
-    setPending(null);
+  function closeUploadModal() {
+    if (uploadModal) URL.revokeObjectURL(uploadModal.previewUrl);
+    setUploadModal(null);
   }
 
   const overlayClass = (closing: boolean) =>
@@ -172,26 +177,14 @@ export default function UploadPage() {
           />
           <div className="relative overflow-hidden w-full py-4 text-center bg-primary/90 hover:bg-primary transition-colors duration-300 rounded-sm">
             <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-            <span className="relative text-primary-foreground tracking-widest text-base">
+            <span className="relative text-primary-foreground tracking-widest text-base flex items-center justify-center gap-2">
+              <Camera size={18} strokeWidth={1.5} />
               写真を選ぶ
             </span>
           </div>
         </label>
 
-        {/* ステータス */}
-        <div className="text-base">
-          {status === "uploading" && (
-            <p className="text-muted-foreground animate-pulse tracking-wider">
-              アップロード中...
-            </p>
-          )}
-          {status === "done" && (
-            <p className="text-foreground tracking-wider">送信しました</p>
-          )}
-          {status === "error" && (
-            <p className="text-red-500">エラーが発生しました</p>
-          )}
-        </div>
+        <div className="h-5" />
 
         {/* リアクションボタン */}
         <button
@@ -199,7 +192,8 @@ export default function UploadPage() {
           className="group relative overflow-hidden w-56 py-4 bg-primary/90 hover:bg-primary transition-colors duration-300 rounded-sm"
         >
           <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-          <span className="relative text-primary-foreground tracking-widest text-base">
+          <span className="relative text-primary-foreground tracking-widest text-base flex items-center justify-center gap-2">
+            <Heart size={18} strokeWidth={1.5} />
             リアクションを送る
           </span>
         </button>
@@ -297,32 +291,65 @@ export default function UploadPage() {
         </div>
       )}
 
-      {/* 確認モーダル */}
-      {pending && (
+      {/* アップロードモーダル */}
+      {uploadModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6">
           <div className="bg-background w-full max-w-sm flex flex-col items-center gap-6 p-6">
-            <p className="tracking-widest text-base text-foreground">
-              この写真をアップロードしますか？
-            </p>
             <img
-              src={pending.previewUrl}
+              src={uploadModal.previewUrl}
               alt="preview"
               className="w-full max-h-64 object-contain"
             />
-            <div className="flex gap-4 w-full">
-              <button
-                onClick={cancelUpload}
-                className="flex-1 py-3 border border-primary/40 text-muted-foreground text-base tracking-widest hover:bg-primary/5 transition-colors"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={confirmUpload}
-                className="flex-1 py-3 bg-primary/90 hover:bg-primary text-primary-foreground text-base tracking-widest transition-colors"
-              >
-                送信する
-              </button>
-            </div>
+            {uploadModal.phase === "confirm" && (
+              <>
+                <p className="tracking-widest text-base text-foreground">
+                  この写真をアップロードしますか？
+                </p>
+                <div className="flex gap-4 w-full">
+                  <button
+                    onClick={closeUploadModal}
+                    className="flex-1 py-3 border border-primary/40 text-muted-foreground text-base tracking-widest hover:bg-primary/5 transition-colors"
+                  >
+                    キャンセル
+                  </button>
+                  <button
+                    onClick={confirmUpload}
+                    className="flex-1 py-3 bg-primary/90 hover:bg-primary text-primary-foreground text-base tracking-widest transition-colors"
+                  >
+                    送信する
+                  </button>
+                </div>
+              </>
+            )}
+            {uploadModal.phase === "uploading" && (
+              <p className="text-muted-foreground animate-pulse tracking-wider text-base">
+                アップロード中...
+              </p>
+            )}
+            {uploadModal.phase === "done" && (
+              <>
+                <p className="text-foreground tracking-wider text-base">
+                  送信しました
+                </p>
+                <button
+                  onClick={closeUploadModal}
+                  className="w-full py-3 border border-primary/30 text-muted-foreground text-base tracking-widest hover:border-primary/60 hover:text-foreground transition-colors"
+                >
+                  閉じる
+                </button>
+              </>
+            )}
+            {uploadModal.phase === "error" && (
+              <>
+                <p className="text-red-500 text-base">エラーが発生しました</p>
+                <button
+                  onClick={closeUploadModal}
+                  className="w-full py-3 border border-primary/30 text-muted-foreground text-base tracking-widest hover:border-primary/60 hover:text-foreground transition-colors"
+                >
+                  閉じる
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
