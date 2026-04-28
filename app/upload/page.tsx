@@ -149,7 +149,7 @@ export default function UploadPage() {
     `${closing ? "animate-fade-out" : "animate-fade-in"} fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6`;
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
+    <main className="relative min-h-svh flex items-center justify-center overflow-hidden bg-background">
       {/* 装飾フレーム */}
       <div className="absolute inset-4 border border-primary/20 pointer-events-none" />
       <div className="absolute inset-6 border border-primary/10 pointer-events-none" />

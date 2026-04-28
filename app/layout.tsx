@@ -29,7 +29,7 @@ export default function RootLayout({
       lang="ja"
       className={`${notoSansJP.variable} ${zenOldMincho.variable} antialiased`}
     >
-      <body className="min-h-dvh flex flex-col">{children}</body>
+      <body className="min-h-svh flex flex-col">{children}</body>
     </html>
   );
 }

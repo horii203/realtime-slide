@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
+    <main className="relative min-h-svh flex items-center justify-center overflow-hidden bg-background">
       {/* 装飾フレーム */}
       <div className="absolute inset-4 border border-primary/20 pointer-events-none" />
       <div className="absolute inset-6 border border-primary/10 pointer-events-none" />
