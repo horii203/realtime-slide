@@ -214,8 +214,8 @@ export default function UploadPage() {
 
       {/* リアクションモーダル */}
       {reaction.show && (
-        <div className={overlayClass(reaction.closing)}>
-          <div className="relative bg-background w-full max-w-sm flex flex-col items-center gap-6 py-10 px-4">
+        <div className={overlayClass(reaction.closing)} onClick={reaction.close}>
+          <div className="relative bg-background w-full max-w-sm flex flex-col items-center gap-6 py-10 px-4" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={reaction.close}
               className="absolute top-3 right-3 text-muted-foreground/60 hover:text-foreground transition-colors text-xl leading-none"
@@ -259,8 +259,8 @@ export default function UploadPage() {
 
       {/* 使い方モーダル */}
       {help.show && (
-        <div className={overlayClass(help.closing)}>
-          <div className="bg-background w-full max-w-sm flex flex-col items-center gap-6 p-8">
+        <div className={overlayClass(help.closing)} onClick={help.close}>
+          <div className="bg-background w-full max-w-sm flex flex-col items-center gap-6 p-8" onClick={(e) => e.stopPropagation()}>
             <h2 className="tracking-widest text-foreground text-base">
               使い方
             </h2>
@@ -291,8 +291,11 @@ export default function UploadPage() {
 
       {/* アップロードモーダル */}
       {uploadModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6">
-          <div className="bg-background w-full max-w-sm flex flex-col items-center gap-6 p-6">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6"
+          onClick={uploadModal.phase !== "uploading" ? closeUploadModal : undefined}
+        >
+          <div className="bg-background w-full max-w-sm flex flex-col items-center gap-6 p-6" onClick={(e) => e.stopPropagation()}>
             <img
               src={uploadModal.previewUrl}
               alt="preview"
