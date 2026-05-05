@@ -6,13 +6,17 @@ import { Camera, Heart } from "lucide-react";
 
 const EMOJIS = ["❤️", "🎉", "👏", "😊", "👍"];
 
-const HELP_STEPS = [
-  { step: 1, text: "「写真を選ぶ」ボタンでスマホから写真を選んでください" },
+const HELP_SECTIONS = [
   {
-    step: 2,
-    text: "確認後「送信する」を押すと、会場内のスクリーンに表示されます",
+    title: "写真をシェアする",
+    items: [
+      "「写真を選ぶ」でスマホから写真を選び、「送信する」を押すと会場のスクリーンに映ります",
+    ],
   },
-  { step: 3, text: "「リアクションを送る」から絵文字をスクリーンに流せます" },
+  {
+    title: "リアクションを送る",
+    items: ["「リアクションを送る」から絵文字をスクリーンに流せます"],
+  },
 ];
 
 function useModal(initialOpen = false) {
@@ -161,9 +165,11 @@ export default function UploadPage() {
             写真をシェアしよう
           </h1>
           <p className="text-muted-foreground leading-relaxed text-base max-w-sm">
-            写真をアップロードすると、
+            新郎新婦との思い出や、
             <br />
-            スクリーンに表示されます。
+            会場の雰囲気を盛り上げる写真を
+            <br />
+            送ってみましょう！
           </p>
         </div>
 
@@ -214,8 +220,14 @@ export default function UploadPage() {
 
       {/* リアクションモーダル */}
       {reaction.show && (
-        <div className={overlayClass(reaction.closing)} onClick={reaction.close}>
-          <div className="relative bg-background w-full max-w-sm flex flex-col items-center gap-6 py-10 px-4" onClick={(e) => e.stopPropagation()}>
+        <div
+          className={overlayClass(reaction.closing)}
+          onClick={reaction.close}
+        >
+          <div
+            className="relative bg-background w-full max-w-sm flex flex-col items-center gap-6 py-10 px-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={reaction.close}
               className="absolute top-3 right-3 text-muted-foreground/60 hover:text-foreground transition-colors text-xl leading-none"
@@ -260,25 +272,30 @@ export default function UploadPage() {
       {/* 使い方モーダル */}
       {help.show && (
         <div className={overlayClass(help.closing)} onClick={help.close}>
-          <div className="bg-background w-full max-w-sm flex flex-col items-center gap-6 p-8" onClick={(e) => e.stopPropagation()}>
-            <h2 className="tracking-widest text-foreground text-base">
-              使い方
-            </h2>
-            <ul className="flex flex-col gap-4 w-full">
-              {HELP_STEPS.map((step, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span
-                    className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium mt-0.5"
-                    style={{ backgroundColor: "#8c7b5a", color: "#f5ecd7" }}
-                  >
-                    {step.step}
+          <div
+            className="bg-background w-full max-w-sm flex flex-col items-center gap-6 p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="tracking-widest text-foreground text-lg">使い方</h2>
+            <div className="flex flex-col gap-6 w-full">
+              {HELP_SECTIONS.map((section, i) => (
+                <div key={i} className="flex flex-col gap-1">
+                  <span className="text-foreground text-base tracking-wider">
+                    {section.title}
                   </span>
-                  <p className="text-muted-foreground text-base leading-relaxed">
-                    {step.text}
-                  </p>
-                </li>
+                  <ul>
+                    {section.items.map((item, j) => (
+                      <li
+                        key={j}
+                        className="text-muted-foreground text-sm leading-relaxed"
+                      >
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
             <button
               onClick={help.close}
               className="w-full py-3 bg-primary/90 hover:bg-primary text-primary-foreground text-base tracking-widest transition-colors"
@@ -293,9 +310,14 @@ export default function UploadPage() {
       {uploadModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6"
-          onClick={uploadModal.phase !== "uploading" ? closeUploadModal : undefined}
+          onClick={
+            uploadModal.phase !== "uploading" ? closeUploadModal : undefined
+          }
         >
-          <div className="bg-background w-full max-w-sm flex flex-col items-center gap-6 p-6" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="bg-background w-full max-w-sm flex flex-col items-center gap-6 p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <img
               src={uploadModal.previewUrl}
               alt="preview"
