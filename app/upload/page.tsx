@@ -75,7 +75,7 @@ export default function UploadPage() {
         photoIndexRef.current = (photoIndexRef.current + 1) % photos.length;
         updatePhoto(photos[photoIndexRef.current]);
         scheduleSlide();
-      }, 5000);
+      }, 8000);
     }
 
     fetch("/api/photos")
